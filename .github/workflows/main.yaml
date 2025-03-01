@@ -1,4 +1,4 @@
-name: pnpm Example Workflow
+name: CICD Workflow
 on:
   push:
     branches: ["main"]
