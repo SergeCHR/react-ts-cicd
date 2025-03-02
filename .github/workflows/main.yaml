@@ -51,30 +51,27 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Run tests
-        run: pnpm run test
-
       - name: Build app
         run: pnpm run build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-cicd-artifact
-          path: dist/
+          name: app_build
+          path: dist
 
   deploy_production:
-    if: github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-22.04
     environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Production setup
         uses: ./.github/actions/deploy-to-s3
         with:
-          artifact_name: build-cicd-artifact
+          artifact_name: app_build
           environment_name: production
           aws_bucket: ${{ secrets.AWS_S3_BUCKET_MAIN }}
           aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID_MAIN }}

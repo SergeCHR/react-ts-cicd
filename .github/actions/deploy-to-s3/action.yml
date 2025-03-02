@@ -1,0 +1,46 @@
+name: Deploy to AWS S3 environment specific
+description: Deploy to AWS S3 based on environment
+
+inputs:
+  artifact_name:
+    description: Name of the artifact to download
+    required: true
+  environment_name:
+    description: Environment name
+    required: true
+  aws_bucket:
+    description: AWS bucket
+    required: true
+  aws_access_key_id:
+    description: AWS access key ID
+    required: true
+  aws_secret_access_key:
+    description: AWS secret access key
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set environment variables
+      shell: bash
+      run: |
+        echo "AWS_BUCKET=${{ inputs.aws_bucket }}" >> $GITHUB_ENV
+        echo "AWS_ACCESS_KEY_ID=${{ inputs.aws_access_key_id }}" >> $GITHUB_ENV
+        echo "AWS_SECRET_ACCESS_KEY=${{ inputs.aws_secret_access_key }}" >> $GITHUB_ENV
+        echo "AWS_REGION=us-east-1" >> $GITHUB_ENV
+    - name: Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: public
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    - name: Deploy ${{ inputs.environment_name }} to AWS S3
+      shell: bash
+      run: |
+        aws s3 sync dist s3://${{ env.AWS_BUCKET }} --region ${{ env.AWS_REGION }} --delete
+        echo "Deployed successfully to ${{ inputs.environment_name }}!"
